@@ -1,6 +1,6 @@
 # How to use xkcdd
 
-`xkcdd` downloads comics and metadata from xkcd.com and writes them out to files in the current directory. The files will be named with the comic's number followed by an underscore and then the comic's name. For example, the image and metadata of  xkcd 1287, "Puzzle", would be written to the files `1287_puzzle.jpg` and `1286_puzzle.json` respectively.
+`xkcdd` downloads comics and metadata from xkcd.com and writes them out to files in the current directory. The files will be named with the comic's number followed by an underscore and then the comic's name. For example, the image and metadata of  xkcd 1287, "Puzzle", would be written to the files `1287_puzzle.jpg` and `1287_puzzle.json` respectively.
 
 `xkcdd` only accepts a single argument, either a number or a url. If more than one argument is given, only the first is used.
 

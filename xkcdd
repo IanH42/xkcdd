@@ -1,0 +1,79 @@
+#! /usr/bin/python
+
+# Given a URL or number of an xkcd comic, download both the comic image
+# and the comic metadata.
+# This scipt does not function well or at all for interactive comics
+
+import sys
+import re
+import subprocess
+import json
+import requests
+from requests.exceptions import HTTPError
+
+def report(msg):
+    name = sys.argv[0].split('/')[-1]
+    sys.stderr.write("{}: {}\n".format(name, msg))
+
+def generate_url(input):
+    url_regex = re.compile("^(https://)?xkcd.com(/[0-9]+)?")
+    num_regex = re.compile("^[1-9][0-9]*$")
+
+    if match := url_regex.match(input): # 'input' is a URL
+        # 'match.group()' is the part of 'input' that matched the regex
+        url = match.group()
+
+        if url[0:7] != "https://":
+            url = "https://" + url
+
+        return url + "/info.0.json"
+
+    elif match := num_regex.match(input): # 'input' is a comic number
+        return("https://xkcd.com/" + input + "/info.0.json")
+
+    else:
+        report("err: '{}' is not a valid xkcd URL or comic number".format(input))
+        report("err: URLs must match the regex '{}'".format(url_regex.pattern))
+        exit(1)
+
+def get(url):
+    print("Getting '{}'".format(url))
+
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+    except HTTPError as http_err:
+        sys.stderr.write("{}\n".format(http_err))
+        exit(1)
+
+    return response.content
+
+def write(data, file):
+    print("Writing '{}'".format(file))
+
+    with open(file, "wb") as f:
+        f.write(data)
+
+if __name__ == "__main__":
+    if len(sys.argv) == 1:
+        # no URL or comic number, get the most recent comic
+        json_url = "https://xkcd.com/info.0.json"
+    elif len(sys.argv) == 2:
+        json_url = generate_url(sys.argv[1])
+    else:
+        report("warn: too many arguments; only the first will be used")
+        json_url = generate_url(sys.argv[1])
+
+    json_raw  = get(json_url)
+    json_data = json.loads(json_raw)
+    img_url   = json_data['img']
+    img_raw   = get(img_url)
+
+    # "https://imgs.xkcd.com/comics/comic_name.jpg" -> "000_comic_name.jpg"
+    img_file  = str(json_data['num']) + "_" + img_url.split('/')[-1]
+
+    # "000_comic_name.jpg" -> "000_comic_name.json"
+    json_file = img_file[:-4] + ".json"
+
+    write(json_raw, json_file)
+    write(img_raw , img_file )
